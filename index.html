@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Responsive Advanced Calculator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    /* ------------------------------
+       GLOBAL RESET + BASE STYLES
+    -------------------------------- */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: radial-gradient(circle at top, #111827, #020617 50%, #000 100%);
+      color: #e5e7eb;
+    }
+
+    /* Container to keep calculator centered and responsive */
+    .app-wrapper {
+      width: 100%;
+      max-width: 420px;
+    }
+
+    /* ------------------------------
+       CALCULATOR SHELL
+    -------------------------------- */
+    .calculator {
+      width: 100%;
+      border-radius: 24px;
+      padding: 14px 14px 18px;
+      background: linear-gradient(
+        145deg,
+        rgba(15, 23, 42, 0.96),
+        rgba(30, 64, 175, 0.85)
+      );
+      box-shadow:
+        0 25px 60px rgba(0, 0, 0, 0.75),
+        0 0 0 1px rgba(148, 163, 184, 0.2);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    /* ------------------------------
+       HEADER + ADVANCED TOGGLE
+    -------------------------------- */
+    .calc-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .brand-title {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .brand-title .name {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+
+    .brand-title .subtitle {
+      font-size: 11px;
+      opacity: 0.7;
+    }
+
+    .toggle-advanced-btn {
+      border: none;
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      background: rgba(15, 23, 42, 0.85);
+      color: #e5e7eb;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      transition: background 0.15s ease, transform 0.08s ease,
+        box-shadow 0.08s ease;
+    }
+
+    .toggle-advanced-btn span.mode-pill {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(96, 165, 250, 0.4);
+    }
+
+    .toggle-advanced-btn .chevron {
+      transition: transform 0.15s ease;
+      font-size: 12px;
+    }
+
+    .toggle-advanced-btn:active {
+      transform: translateY(1px) scale(0.98);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.6);
+    }
+
+    /* when advanced is open, rotate chevron */
+    .calculator.show-advanced .toggle-advanced-btn .chevron {
+      transform: rotate(180deg);
+    }
+
+    /* ------------------------------
+       DISPLAY AREA
+    -------------------------------- */
+    .display {
+      background: radial-gradient(
+          circle at top left,
+          rgba(56, 189, 248, 0.18),
+          transparent 55%
+        ),
+        rgba(15, 23, 42, 0.9);
+      border-radius: 18px;
+      padding: 10px 12px;
+      text-align: right;
+      position: relative;
+      overflow: hidden;
+      box-shadow:
+        inset 0 0 0 1px rgba(148, 163, 184, 0.25),
+        0 15px 35px rgba(0, 0, 0, 0.7);
+    }
+
+    .expression {
+      font-size: 14px;
+      opacity: 0.75;
+      min-height: 18px;
+      word-wrap: break-word;
+      word-break: break-all;
+    }
+
+    .result {
+      font-size: 30px;
+      font-weight: 600;
+      margin-top: 6px;
+      word-wrap: break-word;
+      word-break: break-all;
+    }
+
+    /* ------------------------------
+       BUTTON PANELS
+    -------------------------------- */
+    .panels {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .panel {
+      border-radius: 18px;
+      padding: 8px;
+      background: rgba(15, 23, 42, 0.85);
+      box-shadow:
+        inset 0 0 0 1px rgba(148, 163, 184, 0.18),
+        0 12px 28px rgba(15, 23, 42, 0.9);
+    }
+
+    /* grid for buttons (basic + advanced) */
+    .button-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    /* Base button styling */
+    .btn {
+      border: none;
+      border-radius: 999px;
+      padding: 12px 0;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      background: radial-gradient(
+          circle at top,
+          rgba(248, 250, 252, 0.1),
+          transparent 55%
+        ),
+        rgba(15, 23, 42, 0.95);
+      color: #e5e7eb;
+      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      transition: transform 0.06s ease, box-shadow 0.06s ease,
+        background 0.15s ease;
+    }
+
+    .btn:active {
+      transform: translateY(1px) scale(0.98);
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.6);
+    }
+
+    /* special button types */
+    .btn-operator {
+      background: linear-gradient(135deg, #f97316, #ea580c);
+      color: #fefce8;
+    }
+
+    .btn-equal {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: #ecfdf5;
+      grid-column: span 2;
+    }
+
+    .btn-util {
+      background: rgba(51, 65, 85, 0.98);
+      color: #facc15;
+      font-size: 14px;
+    }
+
+    .btn-sci {
+      background: rgba(15, 23, 42, 0.96);
+      color: #bfdbfe;
+      font-size: 14px;
+    }
+
+    .btn-zero {
+      grid-column: span 2;
+    }
+
+    /* ------------------------------
+       ADVANCED PANEL ANIMATION
+    -------------------------------- */
+    .advanced-panel {
+      max-height: 0;
+      padding-top: 0;
+      padding-bottom: 0;
+      opacity: 0;
+      overflow: hidden;
+      transform: translateY(-4px);
+      transition:
+        max-height 0.22s ease,
+        padding 0.18s ease,
+        opacity 0.2s ease,
+        transform 0.18s ease;
+    }
+
+    .calculator.show-advanced .advanced-panel {
+      max-height: 220px; /* enough for all rows */
+      padding-top: 8px;
+      padding-bottom: 8px;
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ------------------------------
+       RESPONSIVE TWEAKS
+    -------------------------------- */
+
+    /* Small phones */
+    @media (max-width: 380px) {
+      .calculator {
+        padding: 10px 10px 14px;
+        border-radius: 20px;
+      }
+      .result {
+        font-size: 26px;
+      }
+      .expression {
+        font-size: 13px;
+      }
+      .btn {
+        font-size: 14px;
+        padding: 10px 0;
+      }
+      .btn-sci,
+      .btn-util {
+        font-size: 12px;
+      }
+    }
+
+    /* Tablets / large screens */
+    @media (min-width: 768px) {
+      .calculator {
+        max-width: 420px;
+        margin: 0 auto;
+        transform: scale(1.02);
+      }
+      .result {
+        font-size: 34px;
+      }
+      .btn {
+        padding: 13px 0;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app-wrapper">
+    <div class="calculator" id="calculator">
+      <!-- HEADER + TOGGLE -->
+      <div class="calc-header">
+        <div class="brand-title">
+          <div class="name">ABHINAV</div>
+          <div class="subtitle">Standard • DEG mode</div>
+        </div>
+        <button class="toggle-advanced-btn" id="toggleAdvanced">
+          <span>Advanced</span>
+          <span class="mode-pill">Sci</span>
+          <span class="chevron">▾</span>
+        </button>
+      </div>
+
+      <!-- DISPLAY -->
+      <div class="display">
+        <div id="expression" class="expression"></div>
+        <div id="result" class="result">0</div>
+      </div>
+
+      <!-- BUTTON PANELS -->
+      <div class="panels">
+        <!-- BASIC PANEL (Normal calculator jaisa) -->
+        <div class="panel basic-panel">
+          <div class="button-grid" id="basicGrid">
+            <!-- Row: AC, back, %, ÷ -->
+            <button class="btn btn-util" data-action="clear">AC</button>
+            <button class="btn btn-util" data-action="backspace">⌫</button>
+            <button class="btn btn-util" data-value="%">%</button>
+            <button class="btn btn-operator" data-value="/">÷</button>
+
+            <!-- Row: 7 8 9 × -->
+            <button class="btn" data-value="7">7</button>
+            <button class="btn" data-value="8">8</button>
+            <button class="btn" data-value="9">9</button>
+            <button class="btn btn-operator" data-value="*">×</button>
+
+            <!-- Row: 4 5 6 - -->
+            <button class="btn" data-value="4">4</button>
+            <button class="btn" data-value="5">5</button>
+            <button class="btn" data-value="6">6</button>
+            <button class="btn btn-operator" data-value="-">−</button>
+
+            <!-- Row: 1 2 3 + -->
+            <button class="btn" data-value="1">1</button>
+            <button class="btn" data-value="2">2</button>
+            <button class="btn" data-value="3">3</button>
+            <button class="btn btn-operator" data-value="+">+</button>
+
+            <!-- Row: 0 . = -->
+            <button class="btn btn-zero" data-value="0">0</button>
+            <button class="btn" data-value=".">.</button>
+            <button class="btn btn-equal" data-action="equals">=</button>
+          </div>
+        </div>
+
+        <!-- ADVANCED PANEL (toggle se open/close hoga) -->
+        <div class="panel advanced-panel" id="advancedPanel">
+          <div class="button-grid">
+            <!-- Row: brackets + pi + √ -->
+            <button class="btn btn-sci" data-value="("> ( </button>
+            <button class="btn btn-sci" data-value=")"> ) </button>
+            <button class="btn btn-sci" data-value="pi">π</button>
+            <button class="btn btn-sci" data-value="sqrt(">√x</button>
+
+            <!-- Row: x², 1/x, sin, cos -->
+            <button class="btn btn-sci" data-action="square">x²</button>
+            <button class="btn btn-sci" data-action="inverse">1/x</button>
+            <button class="btn btn-sci" data-value="sin(">sin</button>
+            <button class="btn btn-sci" data-value="cos(">cos</button>
+
+            <!-- Row: tan, log, ln, +/- (sign change) -->
+            <button class="btn btn-sci" data-value="tan(">tan</button>
+            <button class="btn btn-sci" data-value="log(">log</button>
+            <button class="btn btn-sci" data-value="ln(">ln</button>
+            <button class="btn btn-sci" data-action="negate">+/-</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // -----------------------------------------
+    // ELEMENT REFERENCES
+    // -----------------------------------------
+    const calculatorEl = document.getElementById("calculator");
+    const expressionEl = document.getElementById("expression");
+    const resultEl = document.getElementById("result");
+    const toggleAdvancedBtn = document.getElementById("toggleAdvanced");
+
+    const basicGrid = document.getElementById("basicGrid");
+    const advancedPanel = document.getElementById("advancedPanel");
+
+    // -----------------------------------------
+    // STATE
+    // -----------------------------------------
+    let expression = "";
+    let justEvaluated = false;
+
+    // DEGREE mode trig helpers
+    function sinFn(x) {
+      return Math.sin((x * Math.PI) / 180);
+    }
+    function cosFn(x) {
+      return Math.cos((x * Math.PI) / 180);
+    }
+    function tanFn(x) {
+      return Math.tan((x * Math.PI) / 180);
+    }
+    function logFn(x) {
+      return Math.log10(x);
+    }
+    function lnFn(x) {
+      return Math.log(x);
+    }
+
+    // -----------------------------------------
+    // UI HELPERS
+    // -----------------------------------------
+    function updateDisplay() {
+      expressionEl.textContent = expression;
+    }
+
+    function clearAll() {
+      expression = "";
+      resultEl.textContent = "0";
+      justEvaluated = false;
+      updateDisplay();
+    }
+
+    function backspace() {
+      if (justEvaluated) {
+        // agar naya calculation start karna ho to expression reset nahi karna,
+        // bas last result ko edit karne de
+        justEvaluated = false;
+      }
+      expression = expression.slice(0, -1);
+      updateDisplay();
+    }
+
+    // Last continuous token or bracketed expression
+    function getLastTokenRange() {
+      if (!expression) return null;
+
+      let i = expression.length - 1;
+
+      // Bracketed expression: (...something...)
+      if (expression[i] === ")") {
+        let depth = 1;
+        i--;
+        while (i >= 0) {
+          if (expression[i] === ")") depth++;
+          else if (expression[i] === "(") depth--;
+          if (depth === 0) break;
+          i--;
+        }
+        return { start: Math.max(i, 0), end: expression.length };
+      }
+
+      // Otherwise, collect last number / token
+      while (
+        i >= 0 &&
+        /[0-9.piE]/.test(expression[i])
+      ) {
+        i--;
+      }
+      return { start: i + 1, end: expression.length };
+    }
+
+    // x² operation on last token
+    function applySquare() {
+      if (!expression) return;
+      const range = getLastTokenRange();
+      if (!range) return;
+
+      const before = expression.slice(0, range.start);
+      const token = expression.slice(range.start, range.end);
+      expression = before + "(" + token + ")**2";
+      updateDisplay();
+    }
+
+    // 1/x operation on last token
+    function applyInverse() {
+      if (!expression) return;
+      const range = getLastTokenRange();
+      if (!range) return;
+
+      const before = expression.slice(0, range.start);
+      const token = expression.slice(range.start, range.end);
+      expression = before + "1/(" + token + ")";
+      updateDisplay();
+    }
+
+    // +/- (sign change) on last token
+    function applyNegate() {
+      if (!expression) return;
+      const range = getLastTokenRange();
+      if (!range) return;
+
+      const before = expression.slice(0, range.start);
+      const token = expression.slice(range.start, range.end);
+
+      // If token already wrapped as (-x), attempt to remove minus
+      if (/^\(-.+\)$/.test(token)) {
+        const stripped = token.slice(2, -1); // remove "(-" and ")"
+        expression = before + stripped;
+      } else {
+        expression = before + "(-" + token + ")";
+      }
+      updateDisplay();
+    }
+
+    // -----------------------------------------
+    // APPEND VALUE (NUMBERS / OPERATORS / FUNCTIONS)
+    // -----------------------------------------
+    function appendValue(value) {
+      if (justEvaluated && /[0-9.]/.test(value)) {
+        // Agar pichla result ke baad direct number press hua,
+        // to naya expression start kar do
+        expression = "";
+      }
+      justEvaluated = false;
+
+      const lastChar = expression.slice(-1);
+
+      // basic: avoid double operator like ++, **, // etc.
+      if (/[+\-*/%]/.test(lastChar) && /[+\-*/%]/.test(value)) {
+        expression = expression.slice(0, -1) + value;
+      } else {
+        expression += value;
+      }
+
+      updateDisplay();
+    }
+
+    // -----------------------------------------
+    // CALCULATION
+    // -----------------------------------------
+    function calculate() {
+      if (!expression) return;
+
+      try {
+        let sanitized = expression;
+
+        // Replace UI symbols with JS operators / functions
+        sanitized = sanitized
+          .replace(/÷/g, "/")
+          .replace(/×/g, "*")
+          .replace(/\bpi\b/g, "Math.PI")
+          .replace(/sin\(/g, "sinFn(")
+          .replace(/cos\(/g, "cosFn(")
+          .replace(/tan\(/g, "tanFn(")
+          .replace(/log\(/g, "logFn(")
+          .replace(/ln\(/g, "lnFn(")
+          .replace(/sqrt\(/g, "Math.sqrt(");
+
+        // Basic safety: allow only expected chars
+        if (/[^0-9+\-*/%.()_A-Za-z,\s]/.test(sanitized)) {
+          throw new Error("Invalid characters");
+        }
+
+        // Evaluate expression
+        const result = Function("return (" + sanitized + ")")();
+
+        if (!isFinite(result) || isNaN(result)) {
+          resultEl.textContent = "Error";
+          justEvaluated = false;
+        } else {
+          // rounding for nice display
+          const rounded =
+            Math.round((result + Number.EPSILON) * 1e12) / 1e12;
+          resultEl.textContent = rounded;
+          expression = String(rounded);
+          justEvaluated = true;
+        }
+      } catch (err) {
+        resultEl.textContent = "Error";
+        justEvaluated = false;
+      }
+
+      updateDisplay();
+    }
+
+    // -----------------------------------------
+    // ADVANCED TOGGLE
+    // -----------------------------------------
+    toggleAdvancedBtn.addEventListener("click", () => {
+      calculatorEl.classList.toggle("show-advanced");
+    });
+
+    // -----------------------------------------
+    // BUTTON CLICK HANDLERS (BASIC + ADVANCED)
+    // -----------------------------------------
+    function handleButtonClick(btn) {
+      const value = btn.getAttribute("data-value");
+      const action = btn.getAttribute("data-action");
+
+      if (action === "clear") return clearAll();
+      if (action === "backspace") return backspace();
+      if (action === "equals") return calculate();
+      if (action === "square") return applySquare();
+      if (action === "inverse") return applyInverse();
+      if (action === "negate") return applyNegate();
+
+      if (value) appendValue(value);
+    }
+
+    basicGrid.addEventListener("click", (e) => {
+      if (e.target.matches("button")) {
+        handleButtonClick(e.target);
+      }
+    });
+
+    advancedPanel.addEventListener("click", (e) => {
+      if (e.target.matches("button")) {
+        handleButtonClick(e.target);
+      }
+    });
+
+    // -----------------------------------------
+    // KEYBOARD SUPPORT (BASIC)
+    // -----------------------------------------
+    window.addEventListener("keydown", (e) => {
+      const key = e.key;
+
+      if ((key >= "0" && key <= "9") || key === ".") {
+        appendValue(key);
+      } else if (["+", "-", "*", "/", "%", "(", ")"].includes(key)) {
+        appendValue(key);
+      } else if (key === "Enter" || key === "=") {
+        e.preventDefault();
+        calculate();
+      } else if (key === "Backspace") {
+        backspace();
+      } else if (key === "Escape") {
+        clearAll();
+      }
+    });
+  </script>
+</body>
+</html>
+
+
