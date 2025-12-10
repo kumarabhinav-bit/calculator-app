@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>NeoCalc — Super Advanced Calculator</title>
+  <title>NeoCalc — Ultimate AI Smart Calculator</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <style>
@@ -35,7 +35,7 @@
       position: relative;
     }
 
-    /* Glow background */
+    /* Glow background + animation */
     .app-wrapper::before,
     .app-wrapper::after {
       content: "";
@@ -45,13 +45,19 @@
       z-index: -1;
       opacity: 0.45;
       filter: blur(45px);
-      transform: translate3d(0, 0, 0);
+    }
+
+    @keyframes floatGlow {
+      0% { transform: translate3d(-10px, 0, 0); }
+      50% { transform: translate3d(10px, 12px, 0); }
+      100% { transform: translate3d(-10px, 0, 0); }
     }
 
     .app-wrapper::before {
       background:
         radial-gradient(circle at 0% 20%, rgba(56, 189, 248, 0.55), transparent 60%),
         radial-gradient(circle at 80% 90%, rgba(59, 130, 246, 0.5), transparent 65%);
+      animation: floatGlow 16s ease-in-out infinite;
     }
 
     .app-wrapper::after {
@@ -59,6 +65,7 @@
         radial-gradient(circle at 100% 0%, rgba(248, 250, 252, 0.25), transparent 60%),
         radial-gradient(circle at 20% 100%, rgba(16, 185, 129, 0.45), transparent 70%);
       mix-blend-mode: screen;
+      animation: floatGlow 20s ease-in-out infinite reverse;
     }
 
     /* Ambient labels (desktop only) */
@@ -144,11 +151,15 @@
       display: flex;
       align-items: center;
       gap: 6px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
     }
 
     .toggle-advanced-btn,
     .theme-toggle-btn,
-    .mode-toggle-btn {
+    .mode-toggle-btn,
+    .ai-btn,
+    .formula-btn {
       border: none;
       border-radius: 999px;
       padding: 6px 10px;
@@ -157,6 +168,7 @@
       text-transform: uppercase;
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 4px;
       cursor: pointer;
       background: rgba(15, 23, 42, 0.85);
@@ -170,6 +182,12 @@
         box-shadow 0.08s ease,
         color 0.15s ease;
       white-space: nowrap;
+    }
+
+    .ai-btn,
+    .formula-btn {
+      padding-inline: 8px;
+      font-size: 11px;
     }
 
     .toggle-advanced-btn span.mode-pill {
@@ -187,14 +205,11 @@
 
     .toggle-advanced-btn:active,
     .theme-toggle-btn:active,
-    .mode-toggle-btn:active {
+    .mode-toggle-btn:active,
+    .ai-btn:active,
+    .formula-btn:active {
       transform: translateY(1px) scale(0.97);
       box-shadow: 0 3px 10px rgba(0, 0, 0, 0.6);
-    }
-
-    .theme-toggle-btn {
-      font-size: 11px;
-      padding-inline: 8px;
     }
 
     .mode-toggle-btn {
@@ -235,13 +250,13 @@
         box-shadow 0.25s ease,
         min-height 0.18s ease,
         max-height 0.18s ease;
-      min-height: 72px;
-      max-height: 140px;
+      min-height: 100px;
+      max-height: 190px;
     }
 
     .calculator.display-expanded .display {
-      min-height: 118px;
-      max-height: 220px;
+      min-height: 145px;
+      max-height: 260px;
     }
 
     .expression {
@@ -268,15 +283,18 @@
       word-break: break-all;
     }
 
-    /* long number -> font shrink */
-    .calculator.long-result-1 .result {
-      font-size: 24px;
-    }
-    .calculator.long-result-2 .result {
-      font-size: 18px;
-    }
-    .calculator.long-result-3 .result {
-      font-size: 14px;
+    .calculator.long-result-1 .result { font-size: 24px; }
+    .calculator.long-result-2 .result { font-size: 18px; }
+    .calculator.long-result-3 .result { font-size: 14px; }
+
+    .ai-explanation {
+      margin-top: 4px;
+      font-size: 11px;
+      text-align: left;
+      opacity: 0.9;
+      max-height: 80px;
+      overflow-y: auto;
+      white-space: pre-wrap;
     }
 
     /* ------------------------------
@@ -361,7 +379,7 @@
     }
 
     /* ------------------------------
-       ADVANCED PANEL ANIMATION (MOBILE)
+       ADVANCED PANEL (MOBILE default)
     -------------------------------- */
     .advanced-panel {
       max-height: 0;
@@ -378,7 +396,7 @@
     }
 
     .calculator.show-advanced .advanced-panel {
-      max-height: 260px;
+      max-height: 420px;
       padding-top: 8px;
       padding-bottom: 8px;
       opacity: 1;
@@ -386,7 +404,152 @@
     }
 
     /* ------------------------------
-       LIGHT THEME
+       HISTORY PANEL
+    -------------------------------- */
+    .history-panel {
+      margin-top: 10px;
+      border-radius: 16px;
+      padding: 8px 10px;
+      background: rgba(15, 23, 42, 0.82);
+      box-shadow:
+        inset 0 0 0 1px rgba(148, 163, 184, 0.22),
+        0 10px 22px rgba(0, 0, 0, 0.7);
+      max-height: 150px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .history-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      opacity: 0.85;
+    }
+
+    .history-clear-btn {
+      font-size: 10px;
+      border: none;
+      border-radius: 999px;
+      padding: 2px 8px;
+      background: rgba(248, 113, 113, 0.15);
+      color: #fecaca;
+      cursor: pointer;
+    }
+
+    .history-list {
+      font-size: 11px;
+      max-height: 110px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+      opacity: 0.9;
+    }
+
+    .history-item-left {
+      flex: 1;
+      text-align: left;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .history-item-right {
+      text-align: right;
+      min-width: 70px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .history-tag {
+      font-size: 9px;
+      opacity: 0.7;
+      margin-left: 4px;
+    }
+
+    /* ------------------------------
+       FORMULA SHEET OVERLAY
+    -------------------------------- */
+    .formula-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.8);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 30;
+      padding: 16px;
+    }
+
+    .formula-overlay.show {
+      display: flex;
+    }
+
+    .formula-card {
+      max-width: 520px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      background: radial-gradient(circle at top, #0f172a, #020617);
+      border-radius: 20px;
+      padding: 16px 18px;
+      box-shadow:
+        0 24px 60px rgba(0, 0, 0, 0.85),
+        0 0 0 1px rgba(148, 163, 184, 0.4);
+    }
+
+    .formula-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      opacity: 0.95;
+    }
+
+    .formula-close {
+      border: none;
+      border-radius: 999px;
+      padding: 2px 8px;
+      cursor: pointer;
+      font-size: 11px;
+      background: rgba(248, 250, 252, 0.9);
+      color: #020617;
+    }
+
+    .formula-section-title {
+      font-size: 13px;
+      margin-top: 8px;
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+
+    .formula-list {
+      font-size: 11px;
+      line-height: 1.5;
+      opacity: 0.9;
+      margin-left: 12px;
+    }
+
+    .formula-list li {
+      margin-bottom: 2px;
+    }
+
+    /* ------------------------------
+       THEMES (light + neon)
     -------------------------------- */
     body.light-theme {
       background: radial-gradient(circle at top, #e5e7eb, #f9fafb 50%, #e5e7eb 100%);
@@ -416,7 +579,8 @@
         0 10px 26px rgba(148, 163, 184, 0.6);
     }
 
-    body.light-theme .panel {
+    body.light-theme .panel,
+    body.light-theme .history-panel {
       background: rgba(241, 245, 249, 0.96);
       box-shadow:
         inset 0 0 0 1px rgba(148, 163, 184, 0.2),
@@ -456,7 +620,9 @@
 
     body.light-theme .toggle-advanced-btn,
     body.light-theme .theme-toggle-btn,
-    body.light-theme .mode-toggle-btn {
+    body.light-theme .mode-toggle-btn,
+    body.light-theme .ai-btn,
+    body.light-theme .formula-btn {
       background: #e5e7eb;
       color: #020617;
       box-shadow: 0 4px 10px rgba(148, 163, 184, 0.8);
@@ -472,11 +638,69 @@
       border-color: rgba(22, 163, 74, 0.7);
     }
 
-    /* small devices: hide labels */
+    /* Neon theme */
+    body.neon-theme {
+      background: radial-gradient(circle at top, #020617, #020617 40%, #000 100%);
+      color: #e0f2fe;
+    }
+
+    body.neon-theme .calculator {
+      background: radial-gradient(circle at top, #020617, #0f172a 55%, #020617);
+      box-shadow:
+        0 0 40px rgba(59, 130, 246, 0.75),
+        0 0 0 1px rgba(129, 140, 248, 0.9);
+    }
+
+    body.neon-theme .btn {
+      background: radial-gradient(
+          circle at top,
+          rgba(129, 140, 248, 0.4),
+          transparent 60%
+        ),
+        #020617;
+      color: #e0f2fe;
+      box-shadow:
+        0 0 18px rgba(56, 189, 248, 0.5),
+        0 0 0 1px rgba(59, 130, 246, 0.6);
+      text-shadow: 0 0 6px rgba(129, 140, 248, 0.9);
+    }
+
+    body.neon-theme .btn-operator {
+      background: linear-gradient(135deg, #fb923c, #ec4899);
+      box-shadow:
+        0 0 18px rgba(248, 113, 113, 0.7),
+        0 0 0 1px rgba(248, 250, 252, 0.4);
+    }
+
+    body.neon-theme .btn-equal {
+      background: linear-gradient(135deg, #22c55e, #2dd4bf);
+      box-shadow:
+        0 0 18px rgba(45, 212, 191, 0.8),
+        0 0 0 1px rgba(190, 242, 100, 0.6);
+    }
+
+    body.neon-theme .display {
+      background: radial-gradient(
+          circle at top left,
+          rgba(56, 189, 248, 0.35),
+          transparent 60%
+        ),
+        #020617;
+      box-shadow:
+        0 0 24px rgba(129, 140, 248, 0.6),
+        0 0 0 1px rgba(148, 163, 184, 0.6);
+    }
+
+    body.neon-theme .panel,
+    body.neon-theme .history-panel {
+      background: rgba(15, 23, 42, 0.94);
+      box-shadow:
+        0 0 18px rgba(0, 0, 0, 0.9),
+        0 0 0 1px rgba(148, 163, 184, 0.5);
+    }
+
     @media (max-width: 767.98px) {
-      .ambient-label {
-        display: none;
-      }
+      .ambient-label { display: none; }
     }
 
     /* ------------------------------
@@ -487,23 +711,18 @@
         padding: 10px 10px 14px;
         border-radius: 20px;
       }
-      .result {
-        font-size: 26px;
-      }
-      .expression {
-        font-size: 13px;
-      }
+      .result { font-size: 26px; }
+      .expression { font-size: 13px; }
       .btn {
         font-size: 14px;
         padding: 10px 0;
       }
-      .btn-sci,
-      .btn-util {
-        font-size: 12px;
-      }
+      .btn-sci, .btn-util { font-size: 12px; }
       .toggle-advanced-btn,
       .theme-toggle-btn,
-      .mode-toggle-btn {
+      .mode-toggle-btn,
+      .ai-btn,
+      .formula-btn {
         font-size: 9px;
         padding-inline: 6px;
       }
@@ -515,76 +734,51 @@
         margin: 0 auto;
         transform: scale(1.02);
       }
-      .result {
-        font-size: 34px;
-      }
-      .btn {
-        padding: 13px 0;
-      }
+      .result { font-size: 34px; }
+      .btn { padding: 13px 0; }
     }
 
     /* ------------------------------
        DESKTOP (>=1024px) — 16:9 + left advanced
     -------------------------------- */
     @media (min-width: 1024px) {
-      body {
-        padding: 0;
-      }
+      body { padding: 0; }
 
       .app-wrapper {
         max-width: min(70vw, 960px);
         aspect-ratio: 16 / 9;
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
       }
 
       .calculator {
         width: 100%;
-        height: 100%;
         max-width: none;
         margin: 0;
-        padding: 18px 18px 22px;
+        padding: 18px 18px 18px;
       }
 
-      .display {
-        padding: 14px 16px;
-      }
+      .display { padding: 14px 16px; }
+      .result { font-size: 36px; }
+      .expression { font-size: 15px; max-height: 52px; }
 
-      .result {
-        font-size: 36px;
-      }
-
-      .expression {
-        font-size: 15px;
-        max-height: 52px;
-      }
-
-      .btn {
-        padding: 14px 0;
-        font-size: 16px;
-      }
+      .btn { padding: 14px 0; font-size: 16px; }
 
       .panels {
         flex-direction: row;
         gap: 16px;
         align-items: stretch;
-        height: 100%;
       }
 
-      .basic-panel,
-      .advanced-panel {
+      .basic-panel, .advanced-panel {
         display: flex;
         flex-direction: column;
       }
 
-      .advanced-panel {
-        order: 1;
-      }
-      .basic-panel {
-        order: 2;
-        flex: 1;
-      }
+      .advanced-panel { order: 1; }
+      .basic-panel { order: 2; flex: 1; }
 
       .advanced-panel {
         max-height: none;
@@ -605,7 +799,7 @@
       }
 
       .calculator.show-advanced .advanced-panel {
-        flex: 0 0 38%;
+        flex: 0 0 40%;
         opacity: 1;
         transform: translateX(0);
         padding-left: 8px;
@@ -621,14 +815,14 @@
       sin θ • cos θ • tan θ • ln x • eˣ
     </div>
     <div class="ambient-label ambient-label-right">
-      ADEERA / Advanced Math Engine / 2025
+      NeoCalc / AI Math Engine / 2025
     </div>
 
     <div class="calculator" id="calculator">
       <!-- HEADER -->
       <div class="calc-header">
         <div class="brand-title">
-          <div class="name">ADEERA</div>
+          <div class="name">NeoCalc</div>
           <div class="subtitle">
             <span>Standard</span>
             <span>•</span>
@@ -638,12 +832,20 @@
         </div>
 
         <div class="header-actions">
+          <button class="formula-btn" id="formulaBtn" title="Formula sheet">
+            📚 Formulas
+          </button>
+
           <button class="mode-toggle-btn" id="modeToggle" title="Switch DEG / RAD">
             <span id="modeToggleText">DEG</span>
           </button>
 
-          <button class="theme-toggle-btn" id="themeToggle" title="Toggle Dark / Light theme">
+          <button class="theme-toggle-btn" id="themeToggle" title="Toggle Dark / Light / Neon">
             <span id="themeIcon">🌙</span>
+          </button>
+
+          <button class="ai-btn" id="aiVoiceBtn" title="AI Smart Voice Calculator">
+            🤖 AI
           </button>
 
           <button class="toggle-advanced-btn" id="toggleAdvanced" title="Show / Hide advanced keys">
@@ -658,6 +860,7 @@
       <div class="display">
         <div id="expression" class="expression"></div>
         <div id="result" class="result">0</div>
+        <div id="aiExplanation" class="ai-explanation"></div>
       </div>
 
       <!-- PANELS -->
@@ -694,27 +897,111 @@
         <!-- ADVANCED PANEL -->
         <div class="panel advanced-panel" id="advancedPanel">
           <div class="button-grid">
+            <!-- Row 1: brackets, pi, sqrt -->
             <button class="btn btn-sci" data-value="("> ( </button>
             <button class="btn btn-sci" data-value=")"> ) </button>
             <button class="btn btn-sci" data-value="pi">π</button>
             <button class="btn btn-sci" data-value="sqrt(">√x</button>
 
+            <!-- Row 2: x², x³, xⁿ, cube root -->
             <button class="btn btn-sci" data-action="square">x²</button>
-            <button class="btn btn-sci" data-action="inverse">1/x</button>
-            <button class="btn btn-sci" data-value="^">xʸ</button>
-            <button class="btn btn-sci" data-action="factorial">n!</button>
+            <button class="btn btn-sci" data-action="cube">x³</button>
+            <button class="btn btn-sci" data-action="powerN">xⁿ</button>
+            <button class="btn btn-sci" data-action="cuberoot">³√x</button>
 
+            <!-- Row 3: trig + Ans -->
             <button class="btn btn-sci" data-value="sin(">sin</button>
             <button class="btn btn-sci" data-value="cos(">cos</button>
             <button class="btn btn-sci" data-value="tan(">tan</button>
             <button class="btn btn-sci" data-action="ans">Ans</button>
 
+            <!-- Row 4: log, ln, exp, abs -->
             <button class="btn btn-sci" data-value="log(">log</button>
             <button class="btn btn-sci" data-value="ln(">ln</button>
             <button class="btn btn-sci" data-value="exp(">eˣ</button>
             <button class="btn btn-sci" data-value="abs(">|x|</button>
+
+            <!-- Row 5: advanced percentage + number theory -->
+            <button class="btn btn-sci" data-action="advPercent">Adv %</button>
+            <button class="btn btn-sci" data-action="lcmTool">LCM</button>
+            <button class="btn btn-sci" data-action="hcfTool">HCF</button>
+            <button class="btn btn-sci" data-action="primeTool">Prime?</button>
+
+            <!-- Row 6: equation + unit + finance + dev -->
+            <button class="btn btn-sci" data-action="solveEq">Solve Eq</button>
+            <button class="btn btn-sci" data-action="unitTool">Unit</button>
+            <button class="btn btn-sci" data-action="financeTool">Finance</button>
+            <button class="btn btn-sci" data-action="devTool">Dev</button>
+
+            <!-- Row 7: matrix + graph -->
+            <button class="btn btn-sci" data-action="matrixTool">Matrix</button>
+            <button class="btn btn-sci" data-action="graphTool">Graph</button>
+            <button class="btn btn-sci" disabled></button>
+            <button class="btn btn-sci" disabled></button>
           </div>
         </div>
+      </div>
+
+      <!-- HISTORY PANEL -->
+      <div class="history-panel" id="historyPanel">
+        <div class="history-header">
+          <span>History</span>
+          <button class="history-clear-btn" id="clearHistoryBtn">Clear</button>
+        </div>
+        <div class="history-list" id="historyList"></div>
+      </div>
+    </div>
+
+    <!-- GRAPH CANVAS (created when needed) -->
+  </div>
+
+  <!-- Formula sheet overlay -->
+  <div class="formula-overlay" id="formulaOverlay">
+    <div class="formula-card">
+      <div class="formula-header">
+        <span>Formula Sheet — Quick View</span>
+        <button class="formula-close" id="formulaCloseBtn">Close</button>
+      </div>
+
+      <div class="formula-content">
+        <div class="formula-section-title">Algebra (School / JEE)</div>
+        <ul class="formula-list">
+          <li>(a + b)² = a² + 2ab + b²</li>
+          <li>(a − b)² = a² − 2ab + b²</li>
+          <li>a² − b² = (a − b)(a + b)</li>
+          <li>Quadratic roots: ax² + bx + c = 0 ⇒ x = [−b ± √(b² − 4ac)] / (2a)</li>
+        </ul>
+
+        <div class="formula-section-title">Trigonometry (DEG / RAD)</div>
+        <ul class="formula-list">
+          <li>sin²θ + cos²θ = 1</li>
+          <li>tanθ = sinθ / cosθ</li>
+          <li>1 + tan²θ = sec²θ</li>
+        </ul>
+
+        <div class="formula-section-title">Calculus</div>
+        <ul class="formula-list">
+          <li>d/dx (xⁿ) = n·xⁿ⁻¹</li>
+          <li>d/dx (sin x) = cos x</li>
+          <li>d/dx (cos x) = −sin x</li>
+          <li>∫ xⁿ dx = xⁿ⁺¹ / (n+1) + C</li>
+        </ul>
+
+        <div class="formula-section-title">Physics (Basic)</div>
+        <ul class="formula-list">
+          <li>v = u + at</li>
+          <li>s = ut + ½at²</li>
+          <li>F = ma</li>
+          <li>W = F · d</li>
+        </ul>
+
+        <div class="formula-section-title">Finance</div>
+        <ul class="formula-list">
+          <li>Simple Interest = (P × R × T) / 100</li>
+          <li>Amount (SI) = P + SI</li>
+          <li>Compound Interest = P (1 + R/100)ᵗ − P</li>
+          <li>EMI ≈ [P·r·(1+r)ⁿ] / [(1+r)ⁿ − 1]</li>
+        </ul>
       </div>
     </div>
   </div>
@@ -731,22 +1018,51 @@
     const calculatorEl = document.getElementById("calculator");
     const expressionEl = document.getElementById("expression");
     const resultEl = document.getElementById("result");
+    const aiExplanationEl = document.getElementById("aiExplanation");
 
     const toggleAdvancedBtn = document.getElementById("toggleAdvanced");
     const themeToggleBtn = document.getElementById("themeToggle");
     const themeIconEl = document.getElementById("themeIcon");
+    const aiVoiceBtn = document.getElementById("aiVoiceBtn");
 
     const modeToggleBtn = document.getElementById("modeToggle");
     const modeToggleTextEl = document.getElementById("modeToggleText");
     const modeLabelEl = document.getElementById("modeLabel");
 
+    const formulaBtn = document.getElementById("formulaBtn");
+    const formulaOverlay = document.getElementById("formulaOverlay");
+    const formulaCloseBtn = document.getElementById("formulaCloseBtn");
+
     const basicGrid = document.getElementById("basicGrid");
     const advancedPanel = document.getElementById("advancedPanel");
+
+    const historyListEl = document.getElementById("historyList");
+    const clearHistoryBtn = document.getElementById("clearHistoryBtn");
+
+    let graphCanvas = null;
+    let graphCtx = null;
 
     let expression = "";
     let justEvaluated = false;
     let trigMode = "DEG";
     let lastResult = 0;
+
+    // history
+    const historyItems = [];
+
+    // voice state
+    let recognition = null;
+    let recognizing = false;
+
+    // theme
+    let themeMode = "dark"; // dark -> light -> neon cycle
+
+    function speak(text) {
+      if (!("speechSynthesis" in window)) return;
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = "hi-IN";
+      window.speechSynthesis.speak(u);
+    }
 
     /* auto display + font-size adjust */
     function adjustDisplaySize() {
@@ -804,6 +1120,85 @@
     function expFn(x) {
       return Math.exp(x);
     }
+    function cbrtFn(x) {
+      return Math.cbrt(x);
+    }
+
+    // gcd / lcm helpers
+    function gcd2(a, b) {
+      a = Math.abs(Math.round(a));
+      b = Math.abs(Math.round(b));
+      if (!a) return b;
+      if (!b) return a;
+      while (b) {
+        const t = b;
+        b = a % b;
+        a = t;
+      }
+      return a;
+    }
+    function lcm2(a, b) {
+      a = Math.round(a);
+      b = Math.round(b);
+      if (!a || !b) return 0;
+      return Math.abs(a * b) / gcd2(a, b);
+    }
+    function gcdList(arr) {
+      return arr.reduce((acc, v) => gcd2(acc, v));
+    }
+    function lcmList(arr) {
+      return arr.reduce((acc, v) => lcm2(acc, v));
+    }
+    function isPrime(n) {
+      n = Math.floor(Math.abs(n));
+      if (n < 2) return false;
+      if (n === 2 || n === 3) return true;
+      if (n % 2 === 0) return false;
+      const limit = Math.floor(Math.sqrt(n));
+      for (let i = 3; i <= limit; i += 2) {
+        if (n % i === 0) return false;
+      }
+      return true;
+    }
+
+    /* history helpers */
+    function pushHistory(expr, res, tag) {
+      const item = {
+        expr,
+        res,
+        tag,
+        time: new Date()
+      };
+      historyItems.unshift(item);
+      if (historyItems.length > 25) historyItems.pop();
+      renderHistory();
+    }
+
+    function renderHistory() {
+      historyListEl.innerHTML = "";
+      historyItems.forEach((item) => {
+        const div = document.createElement("div");
+        div.className = "history-item";
+        const left = document.createElement("div");
+        left.className = "history-item-left";
+        left.textContent = item.expr;
+        const tagSpan = document.createElement("span");
+        tagSpan.className = "history-tag";
+        tagSpan.textContent = "[" + item.tag + "]";
+        left.appendChild(tagSpan);
+        const right = document.createElement("div");
+        right.className = "history-item-right";
+        right.textContent = item.res;
+        div.appendChild(left);
+        div.appendChild(right);
+        historyListEl.appendChild(div);
+      });
+    }
+
+    clearHistoryBtn.addEventListener("click", () => {
+      historyItems.length = 0;
+      renderHistory();
+    });
 
     /* display helpers */
     function updateDisplay() {
@@ -814,6 +1209,7 @@
     function clearAll() {
       expression = "";
       resultEl.textContent = "0";
+      aiExplanationEl.textContent = "";
       justEvaluated = false;
       updateDisplay();
     }
@@ -846,18 +1242,50 @@
 
     function applySquare() {
       if (!expression) return;
-      const range = getLastTokenRange();
-      if (!range) return;
+      const range = getLastTokenRange(); if (!range) return;
       const before = expression.slice(0, range.start);
       const token = expression.slice(range.start, range.end);
       expression = before + "(" + token + ")**2";
       updateDisplay();
     }
 
+    function applyCube() {
+      if (!expression) return;
+      const range = getLastTokenRange(); if (!range) return;
+      const before = expression.slice(0, range.start);
+      const token = expression.slice(range.start, range.end);
+      expression = before + "(" + token + ")**3";
+      updateDisplay();
+    }
+
+    function applyPowerN() {
+      if (!expression) return;
+      const range = getLastTokenRange(); if (!range) return;
+      const nStr = prompt("Enter exponent n for xⁿ:");
+      if (nStr === null) return;
+      const n = Number(nStr);
+      if (!isFinite(n)) {
+        alert("Invalid exponent");
+        return;
+      }
+      const before = expression.slice(0, range.start);
+      const token = expression.slice(range.start, range.end);
+      expression = before + "(" + token + ")**" + n;
+      updateDisplay();
+    }
+
+    function applyCubeRoot() {
+      if (!expression) return;
+      const range = getLastTokenRange(); if (!range) return;
+      const before = expression.slice(0, range.start);
+      const token = expression.slice(range.start, range.end);
+      expression = before + "cbrt(" + token + ")";
+      updateDisplay();
+    }
+
     function applyInverse() {
       if (!expression) return;
-      const range = getLastTokenRange();
-      if (!range) return;
+      const range = getLastTokenRange(); if (!range) return;
       const before = expression.slice(0, range.start);
       const token = expression.slice(range.start, range.end);
       expression = before + "1/(" + token + ")";
@@ -866,8 +1294,7 @@
 
     function applyNegate() {
       if (!expression) return;
-      const range = getLastTokenRange();
-      if (!range) return;
+      const range = getLastTokenRange(); if (!range) return;
       const before = expression.slice(0, range.start);
       const token = expression.slice(range.start, range.end);
 
@@ -882,8 +1309,7 @@
 
     function applyFactorial() {
       if (!expression) return;
-      const range = getLastTokenRange();
-      if (!range) return;
+      const range = getLastTokenRange(); if (!range) return;
       const before = expression.slice(0, range.start);
       const token = expression.slice(range.start, range.end);
       expression = before + "factFn(" + token + ")";
@@ -896,14 +1322,590 @@
       updateDisplay();
     }
 
-    /* append value + special pi handling */
+    /* ADVANCED PERCENT TOOL */
+    function runAdvancedPercentTool() {
+      const mode = prompt(
+        "Advanced % options:\n" +
+        "1) x% of y\n" +
+        "2) Discount (price P, discount D%)\n" +
+        "3) GST (base price P, GST G%)\n\n" +
+        "Enter 1, 2 or 3:"
+      );
+      if (mode === null) return;
+
+      try {
+        let resText = "";
+        if (mode === "1") {
+          const x = Number(prompt("Enter x (percentage):"));
+          const y = Number(prompt("Enter y (base value):"));
+          if (!isFinite(x) || !isFinite(y)) throw new Error();
+          const res = (x / 100) * y;
+          expression = `${x}% of ${y}`;
+          resText = String(res);
+          resultEl.textContent = resText;
+          lastResult = res;
+        } else if (mode === "2") {
+          const p = Number(prompt("Original price (P):"));
+          const d = Number(prompt("Discount % (D):"));
+          if (!isFinite(p) || !isFinite(d)) throw new Error();
+          const disc = (d / 100) * p;
+          const finalPrice = p - disc;
+          expression = `Discount ${d}% on ${p}`;
+          resText = `${finalPrice} (Save: ${disc})`;
+          resultEl.textContent = resText;
+        } else if (mode === "3") {
+          const p = Number(prompt("Base price (P):"));
+          const g = Number(prompt("GST % (G):"));
+          if (!isFinite(p) || !isFinite(g)) throw new Error();
+          const gstAmount = (g / 100) * p;
+          const total = p + gstAmount;
+          expression = `GST ${g}% on ${p}`;
+          resText = `${total} (GST: ${gstAmount})`;
+          resultEl.textContent = resText;
+        } else {
+          alert("Invalid choice");
+          return;
+        }
+        aiExplanationEl.textContent = "";
+        justEvaluated = true;
+        adjustDisplaySize();
+        expressionEl.textContent = expression;
+        pushHistory(expression, resText || resultEl.textContent, "Percent");
+      } catch {
+        alert("Invalid input for Advanced %");
+      }
+    }
+
+    /* LCM / HCF / PRIME TOOLS */
+    function runLCMTool() {
+      const input = prompt("Enter integers separated by commas for LCM (e.g. 12,18,24):");
+      if (input === null) return;
+      const parts = input.split(",").map(s => Number(s.trim())).filter(v => !isNaN(v));
+      if (!parts.length) {
+        alert("No valid numbers");
+        return;
+      }
+      const res = lcmList(parts);
+      expression = `LCM(${parts.join(", ")})`;
+      resultEl.textContent = res;
+      aiExplanationEl.textContent = "";
+      lastResult = res;
+      justEvaluated = true;
+      adjustDisplaySize();
+      expressionEl.textContent = expression;
+      pushHistory(expression, String(res), "LCM");
+    }
+
+    function runHCFTool() {
+      const input = prompt("Enter integers separated by commas for HCF (GCD):");
+      if (input === null) return;
+      const parts = input.split(",").map(s => Number(s.trim())).filter(v => !isNaN(v));
+      if (!parts.length) {
+        alert("No valid numbers");
+        return;
+      }
+      const res = gcdList(parts);
+      expression = `HCF(${parts.join(", ")})`;
+      resultEl.textContent = res;
+      aiExplanationEl.textContent = "";
+      lastResult = res;
+      justEvaluated = true;
+      adjustDisplaySize();
+      expressionEl.textContent = expression;
+      pushHistory(expression, String(res), "HCF");
+    }
+
+    function runPrimeTool() {
+      const nStr = prompt("Enter an integer to check if it's prime:");
+      if (nStr === null) return;
+      const n = Number(nStr);
+      if (!Number.isInteger(n)) {
+        alert("Please enter a whole integer.");
+        return;
+      }
+      const prime = isPrime(n);
+      expression = `Prime check (${n})`;
+      const resText = prime ? `${n} is PRIME` : `${n} is NOT prime`;
+      resultEl.textContent = resText;
+      aiExplanationEl.textContent = "";
+      justEvaluated = true;
+      adjustDisplaySize();
+      expressionEl.textContent = expression;
+      pushHistory(expression, resText, "Prime");
+    }
+
+    /* EQUATION SOLVER TOOL */
+    function runSolveEquationTool() {
+      const type = prompt(
+        "Equation Solver:\n" +
+        "1) Linear: ax + b = 0\n" +
+        "2) Quadratic: ax² + bx + c = 0\n\n" +
+        "Enter 1 or 2:"
+      );
+      if (type === null) return;
+
+      try {
+        aiExplanationEl.textContent = "";
+        let resText = "";
+        if (type === "1") {
+          const a = Number(prompt("Enter a (for ax + b = 0):"));
+          const b = Number(prompt("Enter b:"));
+          if (!isFinite(a) || !isFinite(b) || a === 0) {
+            alert("Invalid a or b (a must not be 0)");
+            return;
+          }
+          const x = -b / a;
+          expression = `${a}x + ${b} = 0`;
+          resText = `x = ${x}`;
+          resultEl.textContent = resText;
+          lastResult = x;
+        } else if (type === "2") {
+          const a = Number(prompt("Enter a (for ax² + bx + c = 0):"));
+          const b = Number(prompt("Enter b:"));
+          const c = Number(prompt("Enter c:"));
+          if (!isFinite(a) || !isFinite(b) || !isFinite(c) || a === 0) {
+            alert("Invalid a, b or c (a must not be 0)");
+            return;
+          }
+          const d = b * b - 4 * a * c;
+          expression = `${a}x² + ${b}x + ${c} = 0`;
+
+          if (d > 0) {
+            const sqrtD = Math.sqrt(d);
+            const x1 = (-b + sqrtD) / (2 * a);
+            const x2 = (-b - sqrtD) / (2 * a);
+            resText = `x₁ = ${x1},  x₂ = ${x2}`;
+          } else if (d === 0) {
+            const x = -b / (2 * a);
+            resText = `x = ${x}`;
+          } else {
+            const sqrtD = Math.sqrt(-d);
+            const real = -b / (2 * a);
+            const imag = sqrtD / (2 * a);
+            resText = `x₁ = ${real} + ${imag}i,  x₂ = ${real} - ${imag}i`;
+          }
+          resultEl.textContent = resText;
+        } else {
+          alert("Invalid choice");
+          return;
+        }
+        justEvaluated = true;
+        adjustDisplaySize();
+        expressionEl.textContent = expression;
+        pushHistory(expression, resText, "Equation");
+      } catch {
+        alert("Error solving equation");
+      }
+    }
+
+    /* UNIT CONVERTER TOOL */
+    function runUnitTool() {
+      const mode = prompt(
+        "Unit Converter:\n" +
+        "1) Length (cm ↔ m)\n" +
+        "2) Mass (kg ↔ g)\n" +
+        "3) Temperature (°C ↔ °F)\n\n" +
+        "Enter 1, 2 or 3:"
+      );
+      if (mode === null) return;
+
+      let expr = "";
+      let resText = "";
+
+      try {
+        if (mode === "1") {
+          const choice = prompt("Type:\n1) cm → m\n2) m → cm");
+          if (choice === null) return;
+          const v = Number(prompt("Enter value:"));
+          if (!isFinite(v)) throw new Error();
+          if (choice === "1") {
+            const res = v / 100;
+            expr = `${v} cm → m`;
+            resText = `${res} m`;
+          } else if (choice === "2") {
+            const res = v * 100;
+            expr = `${v} m → cm`;
+            resText = `${res} cm`;
+          } else throw new Error();
+        } else if (mode === "2") {
+          const choice = prompt("Type:\n1) kg → g\n2) g → kg");
+          if (choice === null) return;
+          const v = Number(prompt("Enter value:"));
+          if (!isFinite(v)) throw new Error();
+          if (choice === "1") {
+            expr = `${v} kg → g`;
+            resText = `${v * 1000} g`;
+          } else if (choice === "2") {
+            expr = `${v} g → kg`;
+            resText = `${v / 1000} kg`;
+          } else throw new Error();
+        } else if (mode === "3") {
+          const choice = prompt("Type:\n1) °C → °F\n2) °F → °C");
+          if (choice === null) return;
+          const v = Number(prompt("Enter temperature:"));
+          if (!isFinite(v)) throw new Error();
+          if (choice === "1") {
+            const res = (v * 9) / 5 + 32;
+            expr = `${v} °C → °F`;
+            resText = `${res.toFixed(2)} °F`;
+          } else if (choice === "2") {
+            const res = ((v - 32) * 5) / 9;
+            expr = `${v} °F → °C`;
+            resText = `${res.toFixed(2)} °C`;
+          } else throw new Error();
+        } else {
+          alert("Invalid choice");
+          return;
+        }
+
+        expression = expr;
+        resultEl.textContent = resText;
+        aiExplanationEl.textContent = "";
+        justEvaluated = true;
+        adjustDisplaySize();
+        expressionEl.textContent = expression;
+        pushHistory(expr, resText, "Unit");
+      } catch {
+        alert("Invalid input for Unit converter");
+      }
+    }
+
+    /* MATRIX TOOL (2x2 / 3x3 determinant) */
+    function runMatrixTool() {
+      const type = prompt(
+        "Matrix Tool:\n" +
+        "1) 2x2 Determinant\n" +
+        "2) 3x3 Determinant\n\n" +
+        "Enter 1 or 2:"
+      );
+      if (type === null) return;
+
+      let expr = "";
+      let resText = "";
+
+      try {
+        if (type === "1") {
+          const a = Number(prompt("a11:"));
+          const b = Number(prompt("a12:"));
+          const c = Number(prompt("a21:"));
+          const d = Number(prompt("a22:"));
+          if ([a,b,c,d].some(v => !isFinite(v))) throw new Error();
+          const det = a * d - b * c;
+          expr = `|${a} ${b}; ${c} ${d}|`;
+          resText = `det = ${det}`;
+        } else if (type === "2") {
+          const a11 = Number(prompt("a11:"));
+          const a12 = Number(prompt("a12:"));
+          const a13 = Number(prompt("a13:"));
+          const a21 = Number(prompt("a21:"));
+          const a22 = Number(prompt("a22:"));
+          const a23 = Number(prompt("a23:"));
+          const a31 = Number(prompt("a31:"));
+          const a32 = Number(prompt("a32:"));
+          const a33 = Number(prompt("a33:"));
+          const arr = [a11,a12,a13,a21,a22,a23,a31,a32,a33];
+          if (arr.some(v => !isFinite(v))) throw new Error();
+          const det =
+            a11 * (a22 * a33 - a23 * a32) -
+            a12 * (a21 * a33 - a23 * a31) +
+            a13 * (a21 * a32 - a22 * a31);
+          expr = "3x3 determinant";
+          resText = `det = ${det}`;
+        } else {
+          alert("Invalid choice");
+          return;
+        }
+
+        expression = expr;
+        resultEl.textContent = resText;
+        aiExplanationEl.textContent = "";
+        justEvaluated = true;
+        adjustDisplaySize();
+        expressionEl.textContent = expression;
+        pushHistory(expr, resText, "Matrix");
+      } catch {
+        alert("Invalid input for Matrix tool");
+      }
+    }
+
+    /* GRAPH TOOL (simple y = f(x)) */
+    function ensureGraphCanvas() {
+      if (!graphCanvas) {
+        graphCanvas = document.createElement("canvas");
+        graphCanvas.width = 420;
+        graphCanvas.height = 240;
+        graphCanvas.style.marginTop = "10px";
+        graphCanvas.style.borderRadius = "18px";
+        graphCanvas.style.boxShadow = "0 18px 40px rgba(0,0,0,0.85)";
+        graphCanvas.style.background = "#020617";
+        document.querySelector(".app-wrapper").appendChild(graphCanvas);
+        graphCtx = graphCanvas.getContext("2d");
+      }
+    }
+
+    function runGraphTool() {
+      const exprInput = prompt(
+        "Graph Plotter\nEnter function of x (JavaScript style):\nExample: x*x, Math.sin(x), x*x + 2*x + 1"
+      );
+      if (exprInput === null || !exprInput.trim()) return;
+
+      ensureGraphCanvas();
+
+      let fn;
+      try {
+        fn = new Function("x", "return " + exprInput);
+        // test
+        fn(0);
+      } catch {
+        alert("Invalid function");
+        return;
+      }
+
+      const ctx = graphCtx;
+      const w = graphCanvas.width;
+      const h = graphCanvas.height;
+
+      ctx.clearRect(0, 0, w, h);
+
+      // axes
+      ctx.save();
+      ctx.strokeStyle = "#475569";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, h / 2);
+      ctx.lineTo(w, h / 2);
+      ctx.moveTo(w / 2, 0);
+      ctx.lineTo(w / 2, h);
+      ctx.stroke();
+      ctx.restore();
+
+      // plot f(x) for x in [-10, 10]
+      ctx.save();
+      ctx.strokeStyle = "#38bdf8";
+      ctx.lineWidth = 2;
+      const xMin = -10;
+      const xMax = 10;
+      const step = (xMax - xMin) / w; // one pixel step
+      let first = true;
+
+      for (let px = 0; px <= w; px++) {
+        const x = xMin + px * step;
+        let y;
+        try {
+          y = fn(x);
+        } catch {
+          continue;
+        }
+        if (!isFinite(y)) continue;
+
+        // map y (say range -10..10) to canvas
+        const yMin = -10;
+        const yMax = 10;
+        const py = h - ((y - yMin) / (yMax - yMin)) * h;
+
+        if (first) {
+          ctx.beginPath();
+          ctx.moveTo(px, py);
+          first = false;
+        } else {
+          ctx.lineTo(px, py);
+        }
+      }
+      ctx.stroke();
+      ctx.restore();
+
+      expression = "y = " + exprInput;
+      resultEl.textContent = "Graph plotted (range x ∈ [-10, 10])";
+      aiExplanationEl.textContent = "";
+      justEvaluated = true;
+      adjustDisplaySize();
+      expressionEl.textContent = expression;
+      pushHistory(expression, "graph", "Graph");
+    }
+
+    /* FINANCE TOOL */
+    async function runFinanceTool() {
+      const mode = prompt(
+        "Finance Mode:\n" +
+        "1) EMI Calculator\n" +
+        "2) Simple Interest\n" +
+        "3) Compound Interest\n" +
+        "4) Profit / Loss\n" +
+        "5) GST (same as Adv % option 3)\n" +
+        "6) Currency Converter (API)\n\n" +
+        "Enter 1–6:"
+      );
+      if (mode === null) return;
+
+      let expr = "";
+      let resText = "";
+
+      try {
+        if (mode === "1") {
+          const P = Number(prompt("Principal (loan amount) P:"));
+          const rYear = Number(prompt("Annual interest rate (%) R:"));
+          const nYears = Number(prompt("Tenure in years:"));
+          if (![P,rYear,nYears].every(v => isFinite(v))) throw new Error();
+          const n = nYears * 12;
+          const r = rYear / 12 / 100;
+          const emi = (P * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+          expr = `EMI (P=${P}, R=${rYear}%, T=${nYears}y)`;
+          resText = `EMI ≈ ${emi.toFixed(2)} per month`;
+        } else if (mode === "2") {
+          const P = Number(prompt("Principal P:"));
+          const R = Number(prompt("Rate (%) R:"));
+          const T = Number(prompt("Time in years T:"));
+          if (![P,R,T].every(v => isFinite(v))) throw new Error();
+          const SI = (P * R * T) / 100;
+          expr = `SI (P=${P},R=${R}%,T=${T})`;
+          resText = `SI = ${SI}, Amount = ${P + SI}`;
+        } else if (mode === "3") {
+          const P = Number(prompt("Principal P:"));
+          const R = Number(prompt("Rate (%) R per year:"));
+          const T = Number(prompt("Time in years T:"));
+          if (![P,R,T].every(v => isFinite(v))) throw new Error();
+          const A = P * Math.pow(1 + R / 100, T);
+          const CI = A - P;
+          expr = `CI (P=${P},R=${R}%,T=${T})`;
+          resText = `CI = ${CI.toFixed(2)}, Amount = ${A.toFixed(2)}`;
+        } else if (mode === "4") {
+          const CP = Number(prompt("Cost Price (CP):"));
+          const SP = Number(prompt("Selling Price (SP):"));
+          if (![CP,SP].every(v => isFinite(v))) throw new Error();
+          const diff = SP - CP;
+          if (diff > 0) {
+            const pct = (diff / CP) * 100;
+            expr = `Profit check (CP=${CP},SP=${SP})`;
+            resText = `Profit = ${diff} (${pct.toFixed(2)}%)`;
+          } else if (diff < 0) {
+            const loss = -diff;
+            const pct = (loss / CP) * 100;
+            expr = `Loss check (CP=${CP},SP=${SP})`;
+            resText = `Loss = ${loss} (${pct.toFixed(2)}%)`;
+          } else {
+            expr = "Profit/Loss";
+            resText = "No profit, no loss";
+          }
+        } else if (mode === "5") {
+          runAdvancedPercentTool();
+          return;
+        } else if (mode === "6") {
+          const from = (prompt("From currency (e.g. INR, USD):") || "INR").toUpperCase();
+          const to = (prompt("To currency (e.g. USD, EUR):") || "USD").toUpperCase();
+          const amount = Number(prompt("Amount:"));
+          if (!isFinite(amount)) throw new Error();
+          expr = `Currency: ${amount} ${from} → ${to}`;
+
+          try {
+            const url = `https://api.exchangerate.host/convert?from=${from}&to=${to}&amount=${amount}`;
+            const resp = await fetch(url);
+            const data = await resp.json();
+            const result = data && typeof data.result === "number" ? data.result : null;
+            if (result == null) throw new Error();
+            resText = `${result.toFixed(2)} ${to}`;
+          } catch {
+            resText = "API error (check internet / CORS)";
+          }
+        } else {
+          alert("Invalid choice");
+          return;
+        }
+
+        expression = expr;
+        resultEl.textContent = resText;
+        aiExplanationEl.textContent = "";
+        justEvaluated = true;
+        adjustDisplaySize();
+        expressionEl.textContent = expression;
+        pushHistory(expr, resText, "Finance");
+      } catch {
+        alert("Invalid input for Finance tool");
+      }
+    }
+
+    /* DEV / HACKER TOOL */
+    async function runDevTool() {
+      const mode = prompt(
+        "Dev / Hacker Mode:\n" +
+        "1) Base Convert (Dec/Bin/Oct/Hex)\n" +
+        "2) ASCII → Text\n" +
+        "3) Text → ASCII codes\n" +
+        "4) IP → Binary\n" +
+        "5) SHA-256 Hash\n\n" +
+        "Enter 1–5:"
+      );
+      if (mode === null) return;
+
+      let expr = "";
+      let resText = "";
+
+      try {
+        if (mode === "1") {
+          const nStr = prompt("Enter integer (decimal):");
+          if (nStr === null) return;
+          const n = parseInt(nStr, 10);
+          if (!Number.isInteger(n)) throw new Error();
+          expr = `Base convert (${n})`;
+          resText =
+            `Bin: ${n.toString(2)} | Oct: ${n.toString(8)} | Hex: ${n.toString(16).toUpperCase()}`;
+        } else if (mode === "2") {
+          const codesStr = prompt("Enter ASCII codes (comma separated, e.g. 72,101,108,108,111):");
+          if (codesStr === null) return;
+          const chars = codesStr.split(",").map(s => String.fromCharCode(Number(s.trim())));
+          expr = "ASCII → Text";
+          resText = chars.join("");
+        } else if (mode === "3") {
+          const text = prompt("Enter text:");
+          if (text === null) return;
+          const codes = Array.from(text).map(ch => ch.charCodeAt(0));
+          expr = "Text → ASCII";
+          resText = codes.join(", ");
+        } else if (mode === "4") {
+          const ip = prompt("Enter IPv4 address (e.g. 192.168.1.10):");
+          if (ip === null) return;
+          const parts = ip.split(".").map(s => Number(s.trim()));
+          if (parts.length !== 4 || parts.some(p => !Number.isInteger(p) || p < 0 || p > 255)) {
+            throw new Error();
+          }
+          const bin = parts.map(p => p.toString(2).padStart(8, "0")).join(".");
+          expr = `IP → Binary (${ip})`;
+          resText = bin;
+        } else if (mode === "5") {
+          const text = prompt("Enter text for SHA-256:");
+          if (text === null) return;
+          expr = "SHA-256 hash";
+          const enc = new TextEncoder().encode(text);
+          const buf = await crypto.subtle.digest("SHA-256", enc);
+          const arr = Array.from(new Uint8Array(buf));
+          resText = arr.map(b => b.toString(16).padStart(2, "0")).join("");
+        } else {
+          alert("Invalid choice");
+          return;
+        }
+
+        expression = expr;
+        resultEl.textContent = resText;
+        aiExplanationEl.textContent = "";
+        justEvaluated = true;
+        adjustDisplaySize();
+        expressionEl.textContent = expression;
+        pushHistory(expr, resText, "Dev");
+      } catch {
+        alert("Error in Dev tool (invalid input or unsupported)");
+      }
+    }
+
+    /* APPEND VALUE (with special π handling) */
     function appendValue(value) {
+      aiExplanationEl.textContent = "";
+
       if (value === "pi") {
         if (!expression) {
           expression = PI_150;
           resultEl.textContent = PI_150;
           justEvaluated = true;
           adjustDisplaySize();
+          pushHistory("π (150 digits)", PI_150, "Pi");
           return;
         } else {
           value = "pi";
@@ -926,6 +1928,8 @@
 
     function calculate() {
       if (!expression) return;
+      aiExplanationEl.textContent = "";
+      let resText = "";
       try {
         let sanitized = expression
           .replace(/÷/g, "/")
@@ -939,7 +1943,8 @@
           .replace(/ln\(/g, "lnFn(")
           .replace(/sqrt\(/g, "Math.sqrt(")
           .replace(/exp\(/g, "expFn(")
-          .replace(/abs\(/g, "Math.abs(");
+          .replace(/abs\(/g, "Math.abs(")
+          .replace(/cbrt\(/g, "cbrtFn(");
 
         if (/[^0-9+\-*/%.()_A-Za-z,\s]/.test(sanitized)) {
           throw new Error("Invalid characters");
@@ -947,21 +1952,27 @@
 
         const result = Function("return (" + sanitized + ")")();
         if (!isFinite(result) || isNaN(result)) {
-          resultEl.textContent = "Error";
+          resText = "Error";
+          resultEl.textContent = resText;
           justEvaluated = false;
         } else {
           const rounded = Math.round((result + Number.EPSILON) * 1e12) / 1e12;
-          resultEl.textContent = rounded;
-          expression = String(rounded);
+          resText = String(rounded);
+          resultEl.textContent = resText;
+          expression = resText;
           lastResult = rounded;
           justEvaluated = true;
         }
       } catch (e) {
+        resText = "Error";
         resultEl.textContent = "Error";
         justEvaluated = false;
       }
       adjustDisplaySize();
       expressionEl.textContent = expression;
+      if (resText !== "Error") {
+        pushHistory(expression, resText, "Calc");
+      }
     }
 
     /* UI toggles */
@@ -969,10 +1980,23 @@
       calculatorEl.classList.toggle("show-advanced");
     });
 
+    // theme cycle: dark -> light -> neon
     themeToggleBtn.addEventListener("click", () => {
-      document.body.classList.toggle("light-theme");
-      const light = document.body.classList.contains("light-theme");
-      themeIconEl.textContent = light ? "☀️" : "🌙";
+      if (themeMode === "dark") {
+        document.body.classList.add("light-theme");
+        document.body.classList.remove("neon-theme");
+        themeMode = "light";
+        themeIconEl.textContent = "☀️";
+      } else if (themeMode === "light") {
+        document.body.classList.remove("light-theme");
+        document.body.classList.add("neon-theme");
+        themeMode = "neon";
+        themeIconEl.textContent = "💜";
+      } else {
+        document.body.classList.remove("light-theme", "neon-theme");
+        themeMode = "dark";
+        themeIconEl.textContent = "🌙";
+      }
     });
 
     function updateModeUI() {
@@ -986,8 +2010,215 @@
     });
     updateModeUI();
 
-    /* button click handler */
+    /* FORMULA OVERLAY */
+    formulaBtn.addEventListener("click", () => {
+      formulaOverlay.classList.add("show");
+    });
+    formulaCloseBtn.addEventListener("click", () => {
+      formulaOverlay.classList.remove("show");
+    });
+    formulaOverlay.addEventListener("click", (e) => {
+      if (e.target === formulaOverlay) {
+        formulaOverlay.classList.remove("show");
+      }
+    });
+
+    /* -------- AI SMART CALCULATOR (voice + natural language) -------- */
+
+    function initVoice() {
+      const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRec) {
+        aiVoiceBtn.disabled = true;
+        aiVoiceBtn.title = "Voice recognition not supported in this browser";
+        return;
+      }
+      recognition = new SpeechRec();
+      recognition.lang = "hi-IN";
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      recognition.addEventListener("start", () => {
+        recognizing = true;
+        aiVoiceBtn.textContent = "🎙 Listen";
+      });
+
+      recognition.addEventListener("end", () => {
+        recognizing = false;
+        aiVoiceBtn.textContent = "🤖 AI";
+      });
+
+      recognition.addEventListener("result", (event) => {
+        const transcript = event.results[0][0].transcript;
+        handleVoiceQuery(transcript);
+      });
+    }
+
+    aiVoiceBtn.addEventListener("click", () => {
+      if (!recognition) {
+        initVoice();
+        if (!recognition) return;
+      }
+      aiExplanationEl.textContent = "";
+      if (recognizing) {
+        recognition.stop();
+      } else {
+        recognition.start();
+      }
+    });
+
+    function handleVoiceQuery(transcript) {
+      const trimmed = transcript.trim();
+      if (!trimmed) return;
+
+      const detailed = window.confirm(
+        "Voice Input:\n\"" + trimmed + "\"\n\nDetailed explanation chahiye?\nOK = Detailed, Cancel = Short"
+      );
+      const mode = detailed ? "detailed" : "short";
+
+      processAiQuery(trimmed, mode);
+    }
+
+    function numbersFromText(t) {
+      const matches = t.match(/(\d+(\.\d+)?)/g);
+      if (!matches) return [];
+      return matches.map(Number);
+    }
+
+    function processAiQuery(text, mode) {
+      const t = text.toLowerCase();
+      let shortAnswer = "";
+      let detailedAnswer = "";
+      let finalExpression = "";
+      let finalResultText = "";
+
+      // percent questions like "20 ka 15 percent"
+      if (t.includes("percent")) {
+        const nums = numbersFromText(t);
+        if (nums.length >= 2 && t.includes("ka")) {
+          const base = nums[0];
+          const pct = nums[1];
+          const res = (pct / 100) * base;
+          finalExpression = `${base} ka ${pct}%`;
+          finalResultText = String(res);
+          shortAnswer = `${base} ka ${pct}% = ${res}`;
+          detailedAnswer =
+            `Step 1: ${pct}% ko fraction me likho = ${pct}/100\n` +
+            `Step 2: Base se multiply: (${pct}/100) × ${base} = ${res}\n\n` +
+            `Isliye ${base} ka ${pct}% = ${res}`;
+        } else if (nums.length >= 2) {
+          const pct = nums[0];
+          const base = nums[1];
+          const res = (pct / 100) * base;
+          finalExpression = `${pct}% of ${base}`;
+          finalResultText = String(res);
+          shortAnswer = `${pct}% of ${base} = ${res}`;
+          detailedAnswer =
+            `Step 1: ${pct}% = ${pct}/100\n` +
+            `Step 2: (${pct}/100) × ${base} = ${res}`;
+        }
+      }
+
+      // "2 ka square plus 5 percent"
+      if (!finalResultText && t.includes("square") && t.includes("percent")) {
+        const nums = numbersFromText(t);
+        if (nums.length >= 2) {
+          const a = nums[0];
+          const p = nums[1];
+          const square = a * a;
+          const extra = (p / 100) * square;
+          const total = square + extra;
+          finalExpression = `${a}² + ${p}% of ${a}²`;
+          finalResultText = String(total);
+          shortAnswer = `${a}² = ${square}, ${p}% of ${square} = ${extra}, total = ${total}`;
+          detailedAnswer =
+            `1️⃣ Pehle square nikala:\n   ${a}² = ${square}\n` +
+            `2️⃣ Ab ${p}% of ${square}:\n   ${p}/100 × ${square} = ${extra}\n` +
+            `3️⃣ Dono add:\n   ${square} + ${extra} = ${total}\n\n` +
+            `→ Final answer = ${total}`;
+        }
+      }
+
+      // "2 ka square"
+      if (!finalResultText && t.includes("square")) {
+        const nums = numbersFromText(t);
+        if (nums.length >= 1) {
+          const a = nums[0];
+          const sq = a * a;
+          finalExpression = `${a}²`;
+          finalResultText = String(sq);
+          shortAnswer = `${a} ka square = ${sq}`;
+          detailedAnswer =
+            `Square ka matlab hota hai number × khud se.\n` +
+            `${a} × ${a} = ${sq}`;
+        }
+      }
+
+      // "5 ka cube"
+      if (!finalResultText && t.includes("cube")) {
+        const nums = numbersFromText(t);
+        if (nums.length >= 1) {
+          const a = nums[0];
+          const cube = a * a * a;
+          finalExpression = `${a}³`;
+          finalResultText = String(cube);
+          shortAnswer = `${a} ka cube = ${cube}`;
+          detailedAnswer =
+            `Cube ka matlab hota hai number × number × number.\n` +
+            `${a} × ${a} × ${a} = ${cube}`;
+        }
+      }
+
+      // derivative of x^2
+      if (!finalResultText && t.includes("derivative")) {
+        if (t.includes("x^2") || t.includes("x²") || t.includes("x square")) {
+          finalExpression = "d/dx (x²)";
+          finalResultText = "2x";
+          shortAnswer = "x² ka derivative = 2x";
+          detailedAnswer =
+            "Rule: d/dx (xⁿ) = n·xⁿ⁻¹\n" +
+            "Yahan n = 2 hai, to:\n" +
+            "d/dx (x²) = 2·x¹ = 2x\n\n" +
+            "Galti jo log karte hain: x² ka derivative ko x² hi likh dete hain,\n" +
+            "lekin power rule ke hisaab se power 1 kam ho jata hai.";
+        }
+      }
+
+      // fallback
+      if (!finalResultText) {
+        finalExpression = "AI Smart Mode";
+        finalResultText = "Sorry, ye voice query is version me parse nahi hui 😅";
+        shortAnswer = finalResultText;
+        detailedAnswer =
+          "Ye AI Smart Calculator abhi limited patterns samajhta hai:\n" +
+          "- \"20 ka 15 percent kitna hota hai\"\n" +
+          "- \"2 ka square plus 5 percent\"\n" +
+          "- \"2 ka square\", \"5 ka cube\"\n" +
+          "- \"Derivative of x square\"\n\n" +
+          "In patterns me tumhe step-by-step solution milta hai.";
+      }
+
+      expression = finalExpression;
+      resultEl.textContent = finalResultText;
+      const explanation = mode === "detailed" ? detailedAnswer : shortAnswer;
+      aiExplanationEl.textContent = explanation;
+      justEvaluated = true;
+      adjustDisplaySize();
+      expressionEl.textContent = expression;
+      pushHistory(finalExpression, finalResultText, "AI");
+
+      speak(explanation);
+    }
+
+    /* button click handler (also vibration) */
+    function vibrateClick() {
+      if (navigator && navigator.vibrate) {
+        navigator.vibrate(10);
+      }
+    }
+
     function handleButtonClick(btn) {
+      vibrateClick();
+
       const value = btn.getAttribute("data-value");
       const action = btn.getAttribute("data-action");
 
@@ -995,10 +2226,24 @@
       if (action === "backspace") return backspace();
       if (action === "equals") return calculate();
       if (action === "square") return applySquare();
+      if (action === "cube") return applyCube();
+      if (action === "powerN") return applyPowerN();
+      if (action === "cuberoot") return applyCubeRoot();
       if (action === "inverse") return applyInverse();
       if (action === "negate") return applyNegate();
       if (action === "factorial") return applyFactorial();
       if (action === "ans") return insertAns();
+      if (action === "advPercent") return runAdvancedPercentTool();
+      if (action === "lcmTool") return runLCMTool();
+      if (action === "hcfTool") return runHCFTool();
+      if (action === "primeTool") return runPrimeTool();
+      if (action === "solveEq") return runSolveEquationTool();
+      if (action === "unitTool") return runUnitTool();
+      if (action === "matrixTool") return runMatrixTool();
+      if (action === "graphTool") return runGraphTool();
+      if (action === "financeTool") return runFinanceTool();
+      if (action === "devTool") return runDevTool();
+
       if (value) return appendValue(value);
     }
 
@@ -1025,9 +2270,10 @@
         clearAll();
       }
     });
+
+    // init voice (once)
+    initVoice();
   </script>
 </body>
 </html>
-
-
 
